@@ -7,7 +7,7 @@ import mill.*, scalalib.*, publish.*
 
 object `package` extends ScalaModule with SonatypeCentralPublishModule:
   val TapirVersion           = "1.11.35"
-  val LogadapterScalaVersion = "0.0.2-SNAPSHOT"
+  val LogadapterScalaVersion = "0.0.2"
   val OsLibVersion           = "0.11.6"
 
   val projectName = "latest"
