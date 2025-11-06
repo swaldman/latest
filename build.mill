@@ -1,0 +1,45 @@
+//| mill-version: 1.0.6
+//| mill-jvm-version: 21
+//+-------------------------------------------------------------------------------------------------------------
+package build
+
+import mill.*, scalalib.*, publish.*
+
+object `package` extends ScalaModule with SonatypeCentralPublishModule:
+  val TapirVersion           = "1.11.35"
+  val LogadapterScalaVersion = "0.0.2-SNAPSHOT"
+  val OsLibVersion           = "0.11.6"
+
+  val projectName = "latest"    
+
+  def makePomSettings( description : String ) =
+    PomSettings(
+      description = description,
+      organization = "com.mchange",
+      url = "https://www.mchange.com/projects/${projectName}",
+      licenses = Seq(License.`Apache-2.0`),
+      versionControl = VersionControl.github("swaldman", projectName),
+      developers = Seq(
+        Developer("swaldman", "Steve Waldman", "https://github.com/swaldman")
+      )
+    )
+
+  override def artifactName   = Task( projectName )
+  override def publishVersion = Task( "0.0.1-SNAPSHOT" )
+  override def pomSettings    = Task( makePomSettings("Serve a (user-defined) 'latest' file from a directory of files.") )
+
+  override def scalaVersion = "3.7.3"
+
+  override def mvnDeps = Task:
+    super.mvnDeps() ++
+      Seq(
+        mvn"com.mchange::logadapter-scala-zio:$LogadapterScalaVersion",
+        mvn"com.lihaoyi::os-lib:${OsLibVersion}",
+        mvn"com.lihaoyi::os-lib-watch:${OsLibVersion}",
+        mvn"com.softwaremill.sttp.tapir::tapir-core:$TapirVersion",
+        mvn"com.softwaremill.sttp.tapir::tapir-zio-http-server:$TapirVersion",
+      )
+
+
+
+
