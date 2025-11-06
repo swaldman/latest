@@ -141,6 +141,15 @@ private def watchForChanges( dirs : Seq[os.Path], fiber : Fiber[Throwable,Unit],
         promise.await
     ZIO.acquireReleaseWith( acquire )( release )( use )
 
+private val RetrySchedule =
+  Schedule.fixed( 30.seconds ) && Schedule.recurWhile[Throwable]:
+      case _ : NoSuchDirectories => // don't retry on misconfiguration
+        false
+      case NonFatal(_) => // in general retry
+        true
+      case _ => // but don't retry fatal throwables
+        false
+
 def serveTask( port : Int, pathsToConfigs : Map[List[String],Config], verbose : Boolean= false ) : Task[Unit] =
   val dirs = pathsToConfigs.map( _(1).dirPath ).toSeq
 
@@ -154,7 +163,7 @@ def serveTask( port : Int, pathsToConfigs : Map[List[String],Config], verbose : 
 
   def serverTask( promise : Promise[Throwable,Unit] ) =
     serveCurrent( port, pathsToConfigs, verbose )
-      .retry( Schedule.fixed( 30.seconds ) )
+      .retry( RetrySchedule )
       .onInterrupt:
          INFO.zlog("Interrupt detected. Shutting down server, will recreate.")
          promise.succeed( () )
