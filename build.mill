@@ -10,7 +10,7 @@ object `package` extends ScalaModule with SonatypeCentralPublishModule:
   val LogadapterScalaVersion = "0.0.2-SNAPSHOT"
   val OsLibVersion           = "0.11.6"
 
-  val projectName = "latest"    
+  val projectName = "latest"
 
   def makePomSettings( description : String ) =
     PomSettings(
@@ -25,7 +25,7 @@ object `package` extends ScalaModule with SonatypeCentralPublishModule:
     )
 
   override def artifactName   = Task( projectName )
-  override def publishVersion = Task( "0.0.1-SNAPSHOT" )
+  override def publishVersion = Task( "0.0.1" )
   override def pomSettings    = Task( makePomSettings("Serve a (user-defined) 'latest' file from a directory of files.") )
 
   override def scalaVersion = "3.7.3"
