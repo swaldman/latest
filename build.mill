@@ -25,7 +25,7 @@ object `package` extends ScalaModule with SonatypeCentralPublishModule:
     )
 
   override def artifactName   = Task( projectName )
-  override def publishVersion = Task( "0.0.1" )
+  override def publishVersion = Task( "0.0.2-SNAPSHOT" )
   override def pomSettings    = Task( makePomSettings("Serve a (user-defined) 'latest' file from a directory of files.") )
 
   override def scalaVersion = "3.7.3"
