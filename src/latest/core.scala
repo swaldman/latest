@@ -40,10 +40,12 @@ final case class NotAFile( message : String, cause : Throwable = null ) extends 
 final case class NotFound( message : String, cause : Throwable = null ) extends LatestException( message, cause )
 final case class NoSuchDirectories( message : String, cause : Throwable = null ) extends LatestException( message, cause )
 
+private def isDotfile( path : os.Path ) : Boolean = path.lastOpt.fold(false)( _.startsWith(".") )
+
 object Default:
   val chooseLatest : IndexedSeq[os.Path] => Option[os.Path] = paths => // last by modified time
     paths
-      .filter( _.lastOpt.fold(false)(lastSegment => !lastSegment.startsWith(".")) ) // always ignore dotfiles
+      .filterNot( isDotfile )
       .map( path => (path, os.stat(path) ) )
       .filter( _(1).isFile )
       .map( tup => (tup(1).mtime, tup(0)) )
@@ -127,10 +129,19 @@ def serveCurrent( port : Int, pathsToConfigs : Map[List[String],Config], verbose
 private def watchForChanges( dirs : Seq[os.Path], fiber : Fiber[Throwable,Unit], promise : Promise[Throwable,Unit] ) : Task[Unit] = //ZIO.never
   def onChanged( paths : Set[os.Path] ) : Task[Unit] =
     //println("onChanged(...)")
-    for
-      _ <- INFO.zlog( s"paths changed: $paths -- recreating server!" )
-      _ <- fiber.interrupt
-    yield ()
+    val recreate =
+      for
+        _ <- INFO.zlog( s"paths changed: $paths -- recreating server!" )
+        _ <- fiber.interrupt
+      yield ()
+
+    // try to ignore changes only to dotfiles
+    // although deletions of dotfiles might still provoke spurious recreates
+    if paths.forall( isDotfile ) then
+      DEBUG.zlog("Ignoring changes affecting only dotfiles " + paths.mkString(", "))
+    else
+      recreate
+
   ZIO.asyncZIO: callback =>
     //println( s"dirs: $dirs" )
     val acquire = ZIO.attempt( os.watch.watch( dirs, paths => callback(onChanged(paths)) ) )
